@@ -3,8 +3,9 @@ package broker
 import (
 	"atse/scheduler_system/env"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"log"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type IBroker interface {

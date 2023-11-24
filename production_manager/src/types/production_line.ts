@@ -1,7 +1,12 @@
 type ProductionLine = {
-    ID:     string,
-    Name:   string,
-    Status: ProductionLineStatus,
-}
+  ID: string;
+  Name: string;
+  Status: ProductionLineStatus;
+};
 
-type ProductionLineStatus = "Staring" | "Running" | "Stopping" | "Stopped" | "Standby"
+type ProductionLineStatus =
+  | "Staring"
+  | "Running"
+  | "Stopping"
+  | "Stopped"
+  | "Standby";

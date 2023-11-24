@@ -8,9 +8,10 @@ import (
 	"atse/scheduler_system/logger"
 	"atse/scheduler_system/scheduler"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Api struct {
