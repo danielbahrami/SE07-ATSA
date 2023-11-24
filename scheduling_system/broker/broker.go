@@ -17,7 +17,7 @@ type Broker struct {
 	client mqtt.Client
 }
 
-func (b Broker) Connect() bool {
+func (b *Broker) Connect() bool {
 	log.Println("Connecting to message broker ...")
 	brokerAddr := env.Get("BROKER")
 	options := mqtt.NewClientOptions()
@@ -34,7 +34,7 @@ func (b Broker) Connect() bool {
 	return true
 }
 
-func (b Broker) Message(topic string, message string) {
+func (b *Broker) Message(topic string, message string) {
 	if b.client != nil {
 		token := b.client.Publish(topic, 1, false, message)
 		token.Wait()
