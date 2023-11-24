@@ -12,10 +12,12 @@ import (
 )
 
 func main() {
+	// Initialize client
 	token := os.Getenv("INFLUXDB_TOKEN")
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
 
+	// Write data
 	org := "SE07-ATSA"
 	bucket := "my-bucket"
 	writeAPI := client.WriteAPIBlocking(org, bucket)
@@ -34,6 +36,7 @@ func main() {
 		}
 	}
 
+	// Execute a flux query
 	queryAPI := client.QueryAPI(org)
 	query := `from(bucket: "my-bucket")
 			  |> range(start: -10m)
@@ -49,6 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Execute an Aggregate Query
 	query = `from(bucket: "my-bucket")
               |> range(start: -10m)
               |> filter(fn: (r) => r._measurement == "measurement1")
