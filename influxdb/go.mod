@@ -1,4 +1,4 @@
-module influxdb
+module github.com/danielbahrami/se07-atsa/influxdb
 
 go 1.21
 
