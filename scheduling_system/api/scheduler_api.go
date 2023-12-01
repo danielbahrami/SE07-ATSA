@@ -1,16 +1,17 @@
 package api
 
 import (
-	"atse/scheduler_system/broker"
-	"atse/scheduler_system/database"
-	"atse/scheduler_system/dto"
-	"atse/scheduler_system/env"
-	"atse/scheduler_system/logger"
-	"atse/scheduler_system/scheduler"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	"github.com/danielbahrami/se07-atsa/scheduling_system/broker"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/database"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/dto"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/env"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/logger"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/scheduler"
+	"github.com/gin-gonic/gin"
 )
 
 type Api struct {

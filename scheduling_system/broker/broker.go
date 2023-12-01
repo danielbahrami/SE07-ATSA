@@ -1,10 +1,10 @@
 package broker
 
 import (
-	"atse/scheduler_system/env"
 	"fmt"
 	"log"
 
+	"github.com/danielbahrami/se07-atsa/scheduling_system/env"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 

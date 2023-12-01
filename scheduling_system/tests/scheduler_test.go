@@ -1,8 +1,9 @@
 package tests
 
 import (
-	"atse/scheduler_system/scheduler"
 	"testing"
+
+	"github.com/danielbahrami/se07-atsa/scheduling_system/scheduler"
 )
 
 func TestScheduler(t *testing.T) {
