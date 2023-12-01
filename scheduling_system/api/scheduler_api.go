@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Api struct {
@@ -70,10 +71,24 @@ func (a *Api) Start() {
 	r.GET("/:id/:signal", a.signalRobot)
 
 	a.broker.Subscribe("topic/robot/new", func(m string) {
-		a.database.GetDB().Create(&dto.Robot{
+		robot := &dto.Robot{
 			ID:    m,
 			State: "IDLE",
+		}
+		a.database.GetDB().Create(robot)
+		a.broker.Subscribe(fmt.Sprintf("topic/%s", m), func(m string) {
+			robot.State = m
+			a.database.GetDB().Save(robot)
 		})
+	})
+	a.broker.Subscribe("topic/production/gpu/completed", func(m string) {
+		log.Println(m)
+		//FIXME: does not update the amount
+		_, id, _ := strings.Cut(strings.Split(m, ",")[0], "=")
+		robot := &dto.Robot{}
+		a.database.GetDB().First(&robot, "ID = ?", id)
+		robot.ProductsProduces++
+		a.database.GetDB().Save(&robot)
 	})
 
 	port := env.Get("API_PORT")
@@ -112,6 +127,6 @@ func (a *Api) getRobot(context *gin.Context) {
 func (a *Api) signalRobot(context *gin.Context) {
 	robotId := context.Param("id")
 	signal := context.Param("signal")
-	a.broker.Message("topic/ROBOT_"+robotId, signal)
+	a.broker.Message(fmt.Sprintf("topic/%s/signal", robotId), signal)
 	context.Status(http.StatusOK)
 }

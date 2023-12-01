@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type Robot struct {
 	gorm.Model
-	ID    string
-	State string
+	ID               string
+	State            string
+	ProductsProduces int
 }
