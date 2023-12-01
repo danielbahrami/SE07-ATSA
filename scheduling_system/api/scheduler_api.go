@@ -8,10 +8,9 @@ import (
 	"atse/scheduler_system/logger"
 	"atse/scheduler_system/scheduler"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Api struct {
@@ -65,14 +64,17 @@ func (a *Api) Start() {
 	router.Use(CORSMiddleware())
 
 	v1 := router.Group("/api/v1")
-	s := v1.Group("/schedule")
-	s.GET("", a.getAllSchedules)
-	s.GET("/:schedule_id", a.getSchedule)
-	s.POST("", a.postSchedule)
-	p := v1.Group("/production_line")
-	p.GET("", a.getAllProductionLines)
-	p.GET("/:production_line_id", a.getProductionLine)
-	p.POST("", a.postProductionLine)
+	r := v1.Group("/robot")
+	r.GET("", a.getAllRobots)
+	r.GET("/:id", a.getRobot)
+	r.GET("/:id/:signal", a.signalRobot)
+
+	a.broker.Subscribe("topic/robot/new", func(m string) {
+		a.database.GetDB().Create(&dto.Robot{
+			ID:    m,
+			State: "IDLE",
+		})
+	})
 
 	port := env.Get("API_PORT")
 	router.Run(fmt.Sprintf("0.0.0.0:%s", port))
@@ -94,48 +96,22 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-func (a *Api) getAllSchedules(context *gin.Context) {
-	var schedules = make([]dto.Schedule, 0)
-	a.database.GetDB().Find(&schedules)
-	context.JSON(http.StatusOK, schedules)
+func (a *Api) getAllRobots(context *gin.Context) {
+	robots := make([]dto.Robot, 0)
+	a.database.GetDB().Find(&robots)
+	context.JSON(http.StatusOK, robots)
 }
 
-func (a *Api) getSchedule(context *gin.Context) {
-	id := context.Param("schedule_id")
-	schedule := dto.Schedule{}
-	a.database.GetDB().First(&schedule, id)
-	context.JSON(http.StatusOK, schedule)
+func (a *Api) getRobot(context *gin.Context) {
+	id := context.Param("id")
+	robot := dto.Robot{}
+	a.database.GetDB().First(&robot, "ID = ?", id)
+	context.JSON(http.StatusOK, robot)
 }
 
-func (a *Api) postSchedule(context *gin.Context) {
-	schedule := dto.Schedule{}
-	err := context.BindJSON(&schedule)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, "{\"message\": \"missing schedule\"}")
-	}
-	a.database.GetDB().Create(&schedule)
-	context.JSON(http.StatusCreated, "{\"message\": \"schedule created\"}")
-}
-
-func (a *Api) getAllProductionLines(context *gin.Context) {
-	var productionLine = make([]dto.ProductionLine, 0)
-	a.database.GetDB().Find(&productionLine)
-	context.JSON(http.StatusOK, productionLine)
-}
-
-func (a *Api) getProductionLine(context *gin.Context) {
-	id := context.Param("production_line_id")
-	productionLine := dto.ProductionLine{}
-	a.database.GetDB().First(&productionLine, id)
-	context.JSON(http.StatusOK, productionLine)
-}
-
-func (a *Api) postProductionLine(context *gin.Context) {
-	productionLine := dto.ProductionLine{}
-	err := context.BindJSON(&productionLine)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, "{\"message\": \"missing production line\"}")
-	}
-	a.database.GetDB().Create(&productionLine)
-	context.JSON(http.StatusCreated, "{\"message\": \"production line created\"}")
+func (a *Api) signalRobot(context *gin.Context) {
+	robotId := context.Param("id")
+	signal := context.Param("signal")
+	a.broker.Message("topic/ROBOT_"+robotId, signal)
+	context.Status(http.StatusOK)
 }

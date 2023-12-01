@@ -47,7 +47,7 @@ func (p *Postgres) Connect() {
 	p.db = db
 	log.Println("Connection established")
 	log.Println("Migrating schemas ...")
-	db.AutoMigrate(&dto.Schedule{}, &dto.ProductionLine{})
+	db.AutoMigrate(&dto.Robot{})
 	log.Println("Done")
 }
 

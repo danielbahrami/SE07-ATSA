@@ -21,7 +21,7 @@ func main() {
 	b := api.NewBuilder()
 	b.Database(&pg)
 	b.Scheduler(scheduler.DummyScheduler{})
-	b.Broker(broker.Broker{})
+	b.Broker(broker.NewMQTT())
 	sys := b.Build()
 	sys.Start()
 
