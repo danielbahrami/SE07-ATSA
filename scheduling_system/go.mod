@@ -1,4 +1,4 @@
-module atse/scheduler_system
+module github.com/danielbahrami/se07-atsa/scheduling_system
 
 go 1.21
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielbahrami/se07-atsa/scheduling_system/env"
+	"github.com/danielbahrami/se07-atsa/influxdb/env"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
