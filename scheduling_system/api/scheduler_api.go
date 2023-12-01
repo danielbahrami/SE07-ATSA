@@ -1,60 +1,117 @@
-package broker
+package api
 
 import (
+	"atse/scheduler_system/broker"
+	"atse/scheduler_system/database"
+	"atse/scheduler_system/dto"
 	"atse/scheduler_system/env"
+	"atse/scheduler_system/logger"
+	"atse/scheduler_system/scheduler"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 )
 
-type IBroker interface {
-	Connect() bool
-	Message(topic string, message string)
-	Subscribe(topic string, onMessage func(m string))
+type Api struct {
+	scheduler scheduler.IScheduler
+	database  database.IDatabase
+	broker    broker.IBroker
 }
 
-type Broker struct {
-	client mqtt.Client
+type Builder struct {
+	scheduler scheduler.IScheduler
+	database  database.IDatabase
+	broker    broker.IBroker
 }
 
-func (b *Broker) Connect() bool {
-	log.Println("Connecting to message broker ...")
-	brokerAddr := env.Get("BROKER")
-	options := mqtt.NewClientOptions()
-	options.AddBroker(fmt.Sprintf("tcp://%s", brokerAddr))
-	options.SetClientID("atse_scheduling_system")
-	options.OnConnect = onConnect
-	options.OnConnectionLost = onConnectionLost
+func NewBuilder() *Builder {
+	return &Builder{}
+}
 
-	b.client = mqtt.NewClient(options)
-	if token := b.client.Connect(); token.Wait() && token.Error() != nil {
-		log.Printf("Could not connect to message broker {%s}\n", token.Error())
-		return false
+func (b *Builder) Broker(broker broker.IBroker) *Builder {
+	b.broker = broker
+	return b
+}
+
+func (b *Builder) Scheduler(scheduler scheduler.IScheduler) *Builder {
+	b.scheduler = scheduler
+	return b
+}
+
+func (b *Builder) Database(database database.IDatabase) *Builder {
+	b.database = database
+	return b
+}
+
+func (b *Builder) Build() Api {
+	return Api{
+		scheduler: b.scheduler,
+		database:  b.database,
+		broker:    b.broker,
 	}
-	return true
 }
 
-func (b *Broker) Message(topic string, message string) {
-	if b.client != nil {
-		token := b.client.Publish(topic, 1, false, message)
-		token.Wait()
-	}
-}
+func (a *Api) Start() {
+	log.Println("Initializing ...")
+	a.broker.Connect()
+	logger.SetBroker(a.broker)
 
-func (b *Broker) Subscribe(topic string, onMessage func(m string)) {
-	fmt.Printf("Subscribing to topic [%s]\n", topic)
-	token := b.client.Subscribe(topic, 1, func(client mqtt.Client, message mqtt.Message) {
-		onMessage(string(message.Payload()))
+	logger.GetLogger().Log("starting")
+	a.database.Connect()
+
+	router := gin.Default()
+	router.Use(CORSMiddleware())
+
+	v1 := router.Group("/api/v1")
+	r := v1.Group("/robot")
+	r.GET("", a.getAllRobots)
+	r.GET("/:id", a.getRobot)
+	r.GET("/:id/:signal", a.signalRobot)
+
+	a.broker.Subscribe("topic/robot/new", func(m string) {
+		a.database.GetDB().Create(&dto.Robot{
+			ID:    m,
+			State: "IDLE",
+		})
 	})
-	token.Wait()
-	if b.client != nil {
+
+	port := env.Get("API_PORT")
+	router.Run(fmt.Sprintf("0.0.0.0:%s", port))
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
 	}
 }
 
-func onConnect(client mqtt.Client) {
-	log.Println("Connection established")
+func (a *Api) getAllRobots(context *gin.Context) {
+	robots := make([]dto.Robot, 0)
+	a.database.GetDB().Find(&robots)
+	context.JSON(http.StatusOK, robots)
 }
 
-func onConnectionLost(client mqtt.Client, err error) {
-	log.Printf("Connection lost {%v}\n", err)
+func (a *Api) getRobot(context *gin.Context) {
+	id := context.Param("id")
+	robot := dto.Robot{}
+	a.database.GetDB().First(&robot, "ID = ?", id)
+	context.JSON(http.StatusOK, robot)
+}
+
+func (a *Api) signalRobot(context *gin.Context) {
+	robotId := context.Param("id")
+	signal := context.Param("signal")
+	a.broker.Message("topic/ROBOT_"+robotId, signal)
+	context.Status(http.StatusOK)
 }

@@ -11,10 +11,15 @@ import (
 type IBroker interface {
 	Connect() bool
 	Message(topic string, message string)
+	Subscribe(topic string, onMessage func(m string))
 }
 
 type Broker struct {
 	client mqtt.Client
+}
+
+func NewMQTT() IBroker {
+	return &Broker{}
 }
 
 func (b *Broker) Connect() bool {
@@ -26,8 +31,8 @@ func (b *Broker) Connect() bool {
 	options.OnConnect = onConnect
 	options.OnConnectionLost = onConnectionLost
 
-	client := mqtt.NewClient(options)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
+	b.client = mqtt.NewClient(options)
+	if token := b.client.Connect(); token.Wait() && token.Error() != nil {
 		log.Printf("Could not connect to message broker {%s}\n", token.Error())
 		return false
 	}
@@ -37,6 +42,16 @@ func (b *Broker) Connect() bool {
 func (b *Broker) Message(topic string, message string) {
 	if b.client != nil {
 		token := b.client.Publish(topic, 1, false, message)
+		token.Wait()
+	}
+}
+
+func (b *Broker) Subscribe(topic string, onMessage func(m string)) {
+	if b.client != nil {
+		log.Printf("Subscribing to topic [%s]\n", topic)
+		token := b.client.Subscribe(topic, 1, func(client mqtt.Client, message mqtt.Message) {
+			onMessage(string(message.Payload()))
+		})
 		token.Wait()
 	}
 }
