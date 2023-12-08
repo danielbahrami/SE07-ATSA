@@ -1,10 +1,12 @@
-﻿internal class Program
+﻿using Robot;
+
+internal class Program
 {
     private static void Main(string[] args)
     {
-        string id = "DEFAULT";
-        if (args.Length > 0) { id = args[0]; }
-        Robot.Broker b = new();
+        var id = "DEFAULT";
+        if (args.Length > 0) id = args[0];
+        Broker b = new();
         Robot.Robot r = new(id, b);
         r.Run();
     }
