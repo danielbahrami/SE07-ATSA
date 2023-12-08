@@ -1,10 +1,10 @@
 package database
 
 import (
-	"atse/scheduler_system/dto"
 	"fmt"
 	"log"
 
+	"github.com/danielbahrami/se07-atsa/scheduling_system/dto"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -47,7 +47,7 @@ func (p *Postgres) Connect() {
 	p.db = db
 	log.Println("Connection established")
 	log.Println("Migrating schemas ...")
-	db.AutoMigrate(&dto.Schedule{}, &dto.ProductionLine{})
+	db.AutoMigrate(&dto.Robot{})
 	log.Println("Done")
 }
 

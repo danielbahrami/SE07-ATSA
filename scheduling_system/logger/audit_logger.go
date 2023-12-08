@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"atse/scheduler_system/broker"
 	"fmt"
+
+	"github.com/danielbahrami/se07-atsa/scheduling_system/broker"
 )
 
 const (

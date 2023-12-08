@@ -1,11 +1,11 @@
 package main
 
 import (
-	"atse/scheduler_system/api"
-	"atse/scheduler_system/broker"
-	"atse/scheduler_system/database"
-	"atse/scheduler_system/env"
-	"atse/scheduler_system/scheduler"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/api"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/broker"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/database"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/env"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/scheduler"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	b := api.NewBuilder()
 	b.Database(&pg)
 	b.Scheduler(scheduler.DummyScheduler{})
-	b.Broker(broker.Broker{})
+	b.Broker(broker.NewMQTT())
 	sys := b.Build()
 	sys.Start()
 

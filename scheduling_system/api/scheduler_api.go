@@ -1,16 +1,17 @@
 package api
 
 import (
-	"atse/scheduler_system/broker"
-	"atse/scheduler_system/database"
-	"atse/scheduler_system/dto"
-	"atse/scheduler_system/env"
-	"atse/scheduler_system/logger"
-	"atse/scheduler_system/scheduler"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/danielbahrami/se07-atsa/scheduling_system/broker"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/database"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/dto"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/env"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/logger"
+	"github.com/danielbahrami/se07-atsa/scheduling_system/scheduler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -65,14 +66,31 @@ func (a *Api) Start() {
 	router.Use(CORSMiddleware())
 
 	v1 := router.Group("/api/v1")
-	s := v1.Group("/schedule")
-	s.GET("", a.getAllSchedules)
-	s.GET("/:schedule_id", a.getSchedule)
-	s.POST("", a.postSchedule)
-	p := v1.Group("/production_line")
-	p.GET("", a.getAllProductionLines)
-	p.GET("/:production_line_id", a.getProductionLine)
-	p.POST("", a.postProductionLine)
+	r := v1.Group("/robot")
+	r.GET("", a.getAllRobots)
+	r.GET("/:id", a.getRobot)
+	r.GET("/:id/:signal", a.signalRobot)
+
+	a.broker.Subscribe("topic/robot/new", func(m string) {
+		robot := &dto.Robot{
+			ID:    m,
+			State: "IDLE",
+		}
+		a.database.GetDB().Create(robot)
+		a.broker.Subscribe(fmt.Sprintf("topic/%s", m), func(m string) {
+			robot.State = m
+			a.database.GetDB().Save(robot)
+		})
+	})
+	a.broker.Subscribe("topic/production/gpu/completed", func(m string) {
+		log.Println(m)
+		//FIXME: does not update the amount
+		_, id, _ := strings.Cut(strings.Split(m, ",")[0], "=")
+		robot := &dto.Robot{}
+		a.database.GetDB().First(&robot, "ID = ?", id)
+		robot.ProductsProduces++
+		a.database.GetDB().Save(&robot)
+	})
 
 	port := env.Get("API_PORT")
 	router.Run(fmt.Sprintf("0.0.0.0:%s", port))
@@ -94,48 +112,22 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-func (a *Api) getAllSchedules(context *gin.Context) {
-	var schedules = make([]dto.Schedule, 0)
-	a.database.GetDB().Find(&schedules)
-	context.JSON(http.StatusOK, schedules)
+func (a *Api) getAllRobots(context *gin.Context) {
+	robots := make([]dto.Robot, 0)
+	a.database.GetDB().Find(&robots)
+	context.JSON(http.StatusOK, robots)
 }
 
-func (a *Api) getSchedule(context *gin.Context) {
-	id := context.Param("schedule_id")
-	schedule := dto.Schedule{}
-	a.database.GetDB().First(&schedule, id)
-	context.JSON(http.StatusOK, schedule)
+func (a *Api) getRobot(context *gin.Context) {
+	id := context.Param("id")
+	robot := dto.Robot{}
+	a.database.GetDB().First(&robot, "ID = ?", id)
+	context.JSON(http.StatusOK, robot)
 }
 
-func (a *Api) postSchedule(context *gin.Context) {
-	schedule := dto.Schedule{}
-	err := context.BindJSON(&schedule)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, "{\"message\": \"missing schedule\"}")
-	}
-	a.database.GetDB().Create(&schedule)
-	context.JSON(http.StatusCreated, "{\"message\": \"schedule created\"}")
-}
-
-func (a *Api) getAllProductionLines(context *gin.Context) {
-	var productionLine = make([]dto.ProductionLine, 0)
-	a.database.GetDB().Find(&productionLine)
-	context.JSON(http.StatusOK, productionLine)
-}
-
-func (a *Api) getProductionLine(context *gin.Context) {
-	id := context.Param("production_line_id")
-	productionLine := dto.ProductionLine{}
-	a.database.GetDB().First(&productionLine, id)
-	context.JSON(http.StatusOK, productionLine)
-}
-
-func (a *Api) postProductionLine(context *gin.Context) {
-	productionLine := dto.ProductionLine{}
-	err := context.BindJSON(&productionLine)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, "{\"message\": \"missing production line\"}")
-	}
-	a.database.GetDB().Create(&productionLine)
-	context.JSON(http.StatusCreated, "{\"message\": \"production line created\"}")
+func (a *Api) signalRobot(context *gin.Context) {
+	robotId := context.Param("id")
+	signal := context.Param("signal")
+	a.broker.Message(fmt.Sprintf("topic/%s/signal", robotId), signal)
+	context.Status(http.StatusOK)
 }
