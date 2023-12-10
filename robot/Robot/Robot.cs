@@ -10,6 +10,7 @@ namespace Robot
     internal class Robot
     {
         private string topic = "topic/";
+        private string notifyTopic = "topic/robot/notify";
         private string controlTopic;
         private string id;
         private State state;
@@ -23,7 +24,7 @@ namespace Robot
             topic += this.id;
             controlTopic = "topic/" + this.id + "/signal";
             this.broker = broker;
-            error = "code 1337 message ¯\\_(ツ)_/¯";
+            error = "FAILED: code 1337 message ¯\\_(ツ)_/¯";
             
         }
 
@@ -34,18 +35,15 @@ namespace Robot
             broker.Subscribe(controlTopic, m => 
             {
                 Console.WriteLine(m);
-                switch(m)
+                switch(m.ToUpper())
                 {
                     case "START":
-                        state = State.RUNNING;
                         OnStart();
                         break;
                     case "HALT":
-                        state = State.IDLE;
                         OnStop();
                         break;
                     default:
-                        state = State.FAILED;
                         OnFailure();
                         break;
                 }
@@ -82,28 +80,39 @@ namespace Robot
                             builder = new();
                             break;
                     }
-                    broker.Message(topic, state.ToString());
                     step = (step + 1) % maxSteps;
                 }
-                
+                broker.Message(topic, state.ToString());
             }
         }
 
         private void OnStart()
         {
-            broker.Message(topic, "STARTING");
+            Console.WriteLine("Starting ...");
+            this.state = State.STARTING;
+            broker.Message(notifyTopic, $"robot_id={this.id},state={this.state}");
+            Thread.Sleep(2000);
+            this.state = State.RUNNING;
+            Console.WriteLine("Running ...");
+            broker.Message(notifyTopic, $"robot_id={this.id},state={this.state}");
         }
 
         private void OnStop()
         {
-            
-            broker.Message(topic, "STOPPING");
+            Console.WriteLine("Stopping ...");
+            this.state = State.STOPPING;
+            broker.Message(notifyTopic, $"robot_id={this.id},state={this.state}");
+            Thread.Sleep(2000);
+            this.state = State.IDLE;
+            Console.WriteLine("Idle ...");
+            broker.Message(notifyTopic, $"robot_id={this.id},state={this.state}");
         }
 
         private void OnFailure()
         {
-            broker.Message(topic, error);
-
+            this.state = State.FAILED;
+            Console.WriteLine("Failed ...");
+            broker.Message(notifyTopic, $"robot_id={this.id},state={this.state},error={error}");
         }
     }
 

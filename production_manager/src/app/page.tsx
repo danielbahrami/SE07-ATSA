@@ -3,12 +3,25 @@ import api from '../logic/api'
 import {useEffect, useRef, useState} from "react";
 import Card from "../components/card";
 import RobotControl from '../components/robot_control';
+//import {addOnMessage, sse} from "../logic/sse";
 
 export default function Home() {
 
   const [robots, setRobots] = useState<Robot[]>([])
+  const [notification, setNotification] = useState<string|undefined>(undefined)
+
+ /* addOnMessage((data) => {
+    setNotification(data);
+  });*/
 
   useEffect(() => {
+    const sse = new EventSource("http://127.0.0.1:5000/sse");
+    sse.onmessage = e => {
+      console.log(e.data)
+      if (e.data != "") {
+        setNotification(e.data);
+      }
+    }
     api.v1.robot.getAll().then(rs => {
       setRobots(rs.sort((a,b) => comp(a,b)))
     })
@@ -37,8 +50,10 @@ export default function Home() {
 
   return (
     <main>
+      {notification &&
+      <div>{notification}</div>}
       <h1>Production manager</h1>
-      {robots.map(r => 
+      {robots.map(r =>
       <Card key={`key_${r.ID}`} title="Robot" body={
         <div>
           ID: {r.ID} 

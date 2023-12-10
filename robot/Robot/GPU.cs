@@ -26,7 +26,7 @@ namespace GPU
 
         public string Package()
         {
-            return $"pcb={pcb},processor={processor},fan={fan},firmware={firmware}";
+            return $"pcb={pcb},processor={processor},fan={fan},firmware={firmware},integrity={Parts.Integrity()}";
         }
     }
 
@@ -50,7 +50,14 @@ namespace GPU
             return $"fan_{fans++}";
         }
 
-        public static string firmware = "v0.0.1";
+        public static readonly string firmware = "v0.0.1";
+
+        // Generate a random number that will determin if the product will pass testing
+        private static readonly Random radnom = new Random();
+        internal static int Integrity()
+        {
+            return radnom.Next(0,100);
+        }
     }
 
     internal class Builder
