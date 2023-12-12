@@ -67,9 +67,6 @@ services:
     environment:
       - BROKER=mqtt
     
-    
-
-
 networks:
   atsa_system:
     external: true

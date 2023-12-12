@@ -1,4 +1,4 @@
 type Robot = {
-    ID: string;
-    State: string;
-}
+  ID: string;
+  State: string;
+};
