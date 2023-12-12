@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:1.6.12
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - atsa_system
+
+  scheudling_system_db:
+    image: postgres:9.4
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: schedules
+    expose:
+      - 5432
+    networks:
+      - atsa_system
+
+  scheduling_system:
+    build:
+      context: ./scheduling_system
+    networks:
+      - atsa_system
+    environment:
+      - API_PORT=22055
+      - BROKER=mqtt:1883
+      - PG_USER=admin
+      - PG_PASSWORD=admin
+      - PG_HOST=scheudling_system_db
+      - PG_PORT=5432
+      - PG_DATABASE=schedules
+    depends_on:
+      - mqtt
+      - scheudling_system_db
+    expose:
+      - 22055
+    ports:
+      - "22055:22055"
+
+  production_manager:
+    build:
+      context: ./production_manager
+    environment:
+      - SCHEDULING_SYSTEM=scheduling_system:22055
+      - NOTIFICATION_SYSTEM=555555
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - atsa_system
+
+  robot_1:
+    build:
+      context: ./robot/Robot
+      args:
+        - ID="01"
+    networks:
+      - atsa_system
+    depends_on:
+      - mqtt
+      - scheduling_system
+    environment:
+      - BROKER=mqtt
+    
+    
+
+
+networks:
+  atsa_system:
+    external: true

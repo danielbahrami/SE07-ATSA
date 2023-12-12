@@ -8,18 +8,22 @@ type api = {
   }
 }
 
+const scheduling_system = process.env.SCHEDULING_SYSTEM || "localhost:22055";
+
+console.log(scheduling_system);
+
 const getRobot = async (id: string): Promise<Robot> => {
-  const res = await fetch(`http:127.0.0.1:22055/api/v1/robot/${id}`)
+  const res = await fetch(`http://${scheduling_system}/api/v1/robot/${id}`)
   return await res.json()
 }
 
 const getRobots = async (): Promise<Robot[]> => {
-  const res = await fetch("http://127.0.0.1:22055/api/v1/robot")
+  const res = await fetch(`http://${scheduling_system}/api/v1/robot`)
   return res.json()
 }
 
 const signalRobot = async (id: string, signal: string) => {
-  await fetch(`http://127.0.0.1:22055/api/v1/robot/${id}/${signal}`)
+  await fetch(`http://${scheduling_system}/api/v1/robot/${id}/${signal}`)
 }
 
 

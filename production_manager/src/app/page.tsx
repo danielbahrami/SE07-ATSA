@@ -10,17 +10,23 @@ export default function Home() {
   const [robots, setRobots] = useState<Robot[]>([])
   const [notification, setNotification] = useState<string|undefined>(undefined)
 
- /* addOnMessage((data) => {
+/*  addOnMessage((data) => {
     setNotification(data);
-  });*/
+  }); */
 
   useEffect(() => {
-    const sse = new EventSource("http://127.0.0.1:5000/sse");
+    const nofification_system = process.env.NOTIFICATION_SYSTEM || "localhost:5000";
+    console.log(nofification_system);
+    const sse = new EventSource(`http://${nofification_system}/sse`);
     sse.onmessage = e => {
       console.log(e.data)
       if (e.data != "") {
         setNotification(e.data);
       }
+    }
+    sse.onerror = e => {
+      setNotification("Notification service unavailable")
+      sse.close();
     }
     api.v1.robot.getAll().then(rs => {
       setRobots(rs.sort((a,b) => comp(a,b)))
