@@ -6,32 +6,50 @@ import (
 	"os"
 	"time"
 
+	"github.com/danielbahrami/se07-atsa/influxdb/broker"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
 
 func main() {
-	// Initialize client
+
+	// Initialize MQTT broker
+	mqttBroker := broker.NewMQTT()
+	if mqttBroker.Connect() {
+		mqttBroker.Subscribe("robot", func(message string) {
+			if message == "RobotRunning" {
+				logRobotStatus(true)
+			}
+		})
+	}
+
+	// Log 'robot' status into InfluxDB
+	logRobotStatus(false) // Initially assuming the robot is not running
+
+	// Keep the main function running to maintain MQTT subscription
+	select {}
+}
+
+// Log 'robot' status into InfluxDB
+func logRobotStatus(running bool) {
 	token := os.Getenv("INFLUXDB_TOKEN")
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
 
-	// Write data
 	org := "SE07-ATSA"
 	bucket := "my-bucket"
 	writeAPI := client.WriteAPIBlocking(org, bucket)
-	for value := 0; value < 5; value++ {
-		tags := map[string]string{
-			"tagname1": "tagvalue1",
-		}
-		fields := map[string]interface{}{
-			"field1": value,
-		}
-		point := write.NewPoint("measurement1", tags, fields, time.Now())
-		time.Sleep(1 * time.Second) // separate points by 1 second
 
-		if err := writeAPI.WritePoint(context.Background(), point); err != nil {
-			log.Fatal(err)
-		}
+	tags := map[string]string{
+		"status": "robot",
+	}
+	fields := map[string]interface{}{
+		"running": running,
+	}
+
+	point := write.NewPoint("robot_status", tags, fields, time.Now())
+
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
+		log.Fatal(err)
 	}
 }
