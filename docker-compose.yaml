@@ -80,7 +80,7 @@ services:
       context: ./production_manager
     environment:
       SCHEDULING_SYSTEM: scheduling_system:22055
-      NOTIFICATION_SYSTEM: notification_system:5000
+      NOTIFICATION_SYSTEM: notification_system:55022
     expose:
       - 3000
     ports:
@@ -92,9 +92,9 @@ services:
     build:
       context: ./notification_system/NotificationSystem
     ports:
-      - "5000:5000"
+      - "55022:55022"
     expose:
-      - 5000
+      - 55022
     depends_on:
       - mqtt
     networks:

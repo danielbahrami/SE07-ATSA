@@ -22,7 +22,7 @@ export default function Home() {
     setRobots(updatedRobots);
     console.log("new", updatedRobots);
   }
-  const nofification_system = process.env.NOTIFICATION_SYSTEM || "localhost:5000";
+  const nofification_system = process.env.NOTIFICATION_SYSTEM || "localhost:55022";
 
   const [robots, setRobots] = useState<Robot[]>([])
   const [notification, setNotification] = useState<string | undefined>("Welcome")
