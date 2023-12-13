@@ -19,6 +19,7 @@ services:
       - 5432
     networks:
       - atsa_system
+    restart: on-failure  
     
   influxdb:
     image: influxdb:2.7
@@ -49,6 +50,7 @@ services:
       - BROKER=mqtt:1883
       - INFLUXDB=influxdb:8086
       - INFLUXDB_TOKEN=XunHv08Vh9iJ_sKZjbON--RigvArg5xEhci70fLa-0aAunazPJlPZxrNdeADP8010CqgL1T5jnd_g48o_pwGvQ==
+    restart: on-failure
 
 
   scheduling_system:
@@ -71,6 +73,7 @@ services:
       - 22055
     ports:
       - "22055:22055"
+    restart: on-failure
 
   production_manager:
     build:
