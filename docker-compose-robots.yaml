@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  robot_1:
+    build:
+      context: ./robot/Robot
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+      - ID=1
+
+  robot_2:
+    build:
+      context: ./robot/Robot
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+      - ID=2
+
+networks:
+  atsa_system:
+    driver: bridge

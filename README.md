@@ -6,7 +6,15 @@ Software Engineering, 7th semester - Advanced Topics in Software Architecture
 
 Start the system
 
-`docker-compose up`
+```shell
+docker-compose up -d
+```
+
+Start the "robots"
+
+```shell
+docker-compose -f docker-compose-robots.yaml up -d
+```
 
 ## MQTT
 

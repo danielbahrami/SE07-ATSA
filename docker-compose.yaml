@@ -112,29 +112,29 @@ services:
     environment:
       - BROKER=mqtt
 
-  robot_1:
-    build:
-      context: ./robot/Robot
-    networks:
-      - atsa_system
-    depends_on:
-      - mqtt
-      - scheduling_system
-    environment:
-      - BROKER=mqtt
-      - ID=1
-
-  robot_2:
-    build:
-      context: ./robot/Robot
-    networks:
-      - atsa_system
-    depends_on:
-      - mqtt
-      - scheduling_system
-    environment:
-      - BROKER=mqtt
-      - ID=2
+#  robot_1:
+#    build:
+#      context: ./robot/Robot
+#    networks:
+#      - atsa_system
+#    depends_on:
+#      - mqtt
+#      - scheduling_system
+#    environment:
+#      - BROKER=mqtt
+#      - ID=1
+#
+#  robot_2:
+#    build:
+#      context: ./robot/Robot
+#    networks:
+#      - atsa_system
+#    depends_on:
+#      - mqtt
+#      - scheduling_system
+#    environment:
+#      - BROKER=mqtt
+#      - ID=2
     
 networks:
   atsa_system:
