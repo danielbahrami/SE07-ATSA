@@ -11,27 +11,7 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
 
-func main() {
-
-	// Initialize MQTT broker
-	mqttBroker := broker.NewMQTT()
-	if mqttBroker.Connect() {
-		mqttBroker.Subscribe("robot", func(message string) {
-			if message == "RobotRunning" {
-				logRobotStatus(true)
-			}
-		})
-	}
-
-	// Log 'robot' status into InfluxDB
-	logRobotStatus(false) // Initially assuming the robot is not running
-
-	// Keep the main function running to maintain MQTT subscription
-	select {}
-}
-
-// Log 'robot' status into InfluxDB
-func logRobotStatus(running bool) {
+func logRobotStatus(running bool, gpuProduced bool) {
 	token := os.Getenv("INFLUXDB_TOKEN")
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
@@ -44,7 +24,8 @@ func logRobotStatus(running bool) {
 		"status": "robot",
 	}
 	fields := map[string]interface{}{
-		"running": running,
+		"running":      running,
+		"gpu_produced": gpuProduced,
 	}
 
 	point := write.NewPoint("robot_status", tags, fields, time.Now())
@@ -52,4 +33,25 @@ func logRobotStatus(running bool) {
 	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	// Initialize MQTT broker
+	mqttBroker := broker.NewMQTT()
+	if mqttBroker.Connect() {
+		mqttBroker.Subscribe("robot", func(message string) {
+			switch message {
+			case "RobotRunning":
+				logRobotStatus(true, false) // Robot is running, GPU not produced yet
+			case "GPUProduced":
+				logRobotStatus(true, true) // Robot produced a GPU
+			}
+		})
+	}
+
+	// Log 'robot' status into InfluxDB
+	logRobotStatus(false, false) // Initially assuming the robot hasn't produced GPU
+
+	// Keep the main function running to maintain MQTT subscription
+	select {}
 }
