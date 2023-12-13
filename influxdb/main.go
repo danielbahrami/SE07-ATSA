@@ -2,69 +2,85 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/danielbahrami/se07-atsa/influxdb/broker"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
 
-func main() {
-	// Initialize client
+func logRobotStatus(running bool, gpuProduced bool) {
 	token := os.Getenv("INFLUXDB_TOKEN")
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
 
-	// Write data
 	org := "SE07-ATSA"
 	bucket := "my-bucket"
 	writeAPI := client.WriteAPIBlocking(org, bucket)
-	for value := 0; value < 5; value++ {
-		tags := map[string]string{
-			"tagname1": "tagvalue1",
-		}
-		fields := map[string]interface{}{
-			"field1": value,
-		}
-		point := write.NewPoint("measurement1", tags, fields, time.Now())
-		time.Sleep(1 * time.Second) // separate points by 1 second
 
-		if err := writeAPI.WritePoint(context.Background(), point); err != nil {
-			log.Fatal(err)
-		}
+	tags := map[string]string{
+		"status": "robot",
+	}
+	fields := map[string]interface{}{
+		"running":      running,
+		"gpu_produced": gpuProduced,
 	}
 
-	// Execute a flux query
-	queryAPI := client.QueryAPI(org)
-	query := `from(bucket: "my-bucket")
-			  |> range(start: -10m)
-			  |> filter(fn: (r) => r._measurement == "measurement1")`
-	results, err := queryAPI.Query(context.Background(), query)
-	if err != nil {
+	point := write.NewPoint("robot_status", tags, fields, time.Now())
+
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
 		log.Fatal(err)
 	}
-	for results.Next() {
-		fmt.Println(results.Record())
+}
+
+func logTestStatus(testName string, passed bool) {
+	token := os.Getenv("INFLUXDB_TOKEN")
+	url := "http://localhost:8086"
+	client := influxdb2.NewClient(url, token)
+	org := "SE07-ATSA"
+	bucket := "my-bucket"
+	writeAPI := client.WriteAPIBlocking(org, bucket)
+
+	tags := map[string]string{
+		"status": "test",
+		"test":   testName,
 	}
-	if err := results.Err(); err != nil {
-		log.Fatal(err)
+	fields := map[string]interface{}{
+		"passed": passed,
 	}
 
-	// Execute an Aggregate Query
-	query = `from(bucket: "my-bucket")
-              |> range(start: -10m)
-              |> filter(fn: (r) => r._measurement == "measurement1")
-              |> mean()`
-	results, err = queryAPI.Query(context.Background(), query)
-	if err != nil {
+	point := write.NewPoint("test_status", tags, fields, time.Now())
+
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
 		log.Fatal(err)
 	}
-	for results.Next() {
-		fmt.Println(results.Record())
+}
+
+func main() {
+	mqttBroker := broker.NewMQTT()
+	if mqttBroker.Connect() {
+		mqttBroker.Subscribe("robot", func(message string) {
+			switch message {
+			case "RobotRunning":
+				logRobotStatus(true, false)
+			case "GPUProduced":
+				logRobotStatus(true, true)
+			}
+		})
+
+		mqttBroker.Subscribe("testing", func(message string) {
+			parts := strings.Split(message, ":")
+			if len(parts) == 2 {
+				testName := parts[0]
+				result := parts[1]
+				passed := result == "Pass"
+				logTestStatus(testName, passed)
+			}
+		})
 	}
-	if err := results.Err(); err != nil {
-		log.Fatal(err)
-	}
+	logRobotStatus(false, false)
+	select {}
 }
