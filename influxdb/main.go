@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -34,37 +33,5 @@ func main() {
 		if err := writeAPI.WritePoint(context.Background(), point); err != nil {
 			log.Fatal(err)
 		}
-	}
-
-	// Execute a flux query
-	queryAPI := client.QueryAPI(org)
-	query := `from(bucket: "my-bucket")
-			  |> range(start: -10m)
-			  |> filter(fn: (r) => r._measurement == "measurement1")`
-	results, err := queryAPI.Query(context.Background(), query)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for results.Next() {
-		fmt.Println(results.Record())
-	}
-	if err := results.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Execute an Aggregate Query
-	query = `from(bucket: "my-bucket")
-              |> range(start: -10m)
-              |> filter(fn: (r) => r._measurement == "measurement1")
-              |> mean()`
-	results, err = queryAPI.Query(context.Background(), query)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for results.Next() {
-		fmt.Println(results.Record())
-	}
-	if err := results.Err(); err != nil {
-		log.Fatal(err)
 	}
 }
