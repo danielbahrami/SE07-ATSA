@@ -17,7 +17,7 @@ func logRobotStatus(running bool, gpuProduced bool) {
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
 
-	org := "SE07-ATSA"
+	org := "my-org"
 	bucket := "my-bucket"
 	writeAPI := client.WriteAPIBlocking(org, bucket)
 
@@ -40,7 +40,7 @@ func logTestStatus(testName string, passed bool) {
 	token := os.Getenv("INFLUXDB_TOKEN")
 	url := "http://localhost:8086"
 	client := influxdb2.NewClient(url, token)
-	org := "SE07-ATSA"
+	org := "my-org"
 	bucket := "my-bucket"
 	writeAPI := client.WriteAPIBlocking(org, bucket)
 
