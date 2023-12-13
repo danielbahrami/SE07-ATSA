@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/danielbahrami/se07-atsa/influxdb/broker"
@@ -35,23 +36,51 @@ func logRobotStatus(running bool, gpuProduced bool) {
 	}
 }
 
+func logTestStatus(testName string, passed bool) {
+	token := os.Getenv("INFLUXDB_TOKEN")
+	url := "http://localhost:8086"
+	client := influxdb2.NewClient(url, token)
+	org := "SE07-ATSA"
+	bucket := "my-bucket"
+	writeAPI := client.WriteAPIBlocking(org, bucket)
+
+	tags := map[string]string{
+		"status": "test",
+		"test":   testName,
+	}
+	fields := map[string]interface{}{
+		"passed": passed,
+	}
+
+	point := write.NewPoint("test_status", tags, fields, time.Now())
+
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
-	// Initialize MQTT broker
 	mqttBroker := broker.NewMQTT()
 	if mqttBroker.Connect() {
 		mqttBroker.Subscribe("robot", func(message string) {
 			switch message {
 			case "RobotRunning":
-				logRobotStatus(true, false) // Robot is running, GPU not produced yet
+				logRobotStatus(true, false)
 			case "GPUProduced":
-				logRobotStatus(true, true) // Robot produced a GPU
+				logRobotStatus(true, true)
+			}
+		})
+
+		mqttBroker.Subscribe("testing", func(message string) {
+			parts := strings.Split(message, ":")
+			if len(parts) == 2 {
+				testName := parts[0]
+				result := parts[1]
+				passed := result == "Pass"
+				logTestStatus(testName, passed)
 			}
 		})
 	}
-
-	// Log 'robot' status into InfluxDB
-	logRobotStatus(false, false) // Initially assuming the robot hasn't produced GPU
-
-	// Keep the main function running to maintain MQTT subscription
+	logRobotStatus(false, false)
 	select {}
 }
