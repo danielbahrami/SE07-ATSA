@@ -6,22 +6,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 namespace TestingSystem
 {
     internal class Broker
     {
         private IMqttClient client;
         private MqttFactory factory;
+        private string brokerAddress;
 
-        public Broker()
+        public Broker(string brokerAddress)
         {
+            this.brokerAddress = brokerAddress;
             factory = new MqttFactory();
             client = factory.CreateMqttClient();
         }
 
-        public async Task Connect()
+        public async Task Connect() 
         {
-            var options = new MqttClientOptionsBuilder().WithTcpServer("127.0.0.1", 1883).Build();
+            var options = new MqttClientOptionsBuilder().WithTcpServer(brokerAddress,1883).Build();
             Console.WriteLine("Connecting to broker ...");
             await client.ConnectAsync(options, CancellationToken.None);
             Console.WriteLine("Connection established");
@@ -35,10 +38,10 @@ namespace TestingSystem
 
         public delegate void OnMessage(string message);
 
-        public async void Subscribe(string topic, OnMessage onMessage)
+        public async void Subscribe(string topic, OnMessage onMessage) 
         {
             var mqttTopic = factory.CreateSubscribeOptionsBuilder().WithTopicFilter(t => t.WithTopic(topic)).Build();
-            Console.WriteLine("Subscribing to topic [" + topic + "] ...");
+            Console.WriteLine("Subscribing to topic [" + topic +"] ...");
             await client.SubscribeAsync(mqttTopic, CancellationToken.None);
             client.ApplicationMessageReceivedAsync += e =>
             {

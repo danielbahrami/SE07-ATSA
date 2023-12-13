@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using NotificationSystem;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -7,14 +9,14 @@ internal class Program
 {
     // Very simple SSE server
 
-    private static Broker broker = new Broker();
-
     // Event Queue
     private static Queue<string> queue = new Queue<string>();
 
     private static void Main(string[] args)
     {
+        string brokerAddress = Environment.GetEnvironmentVariable("BROKER");
 
+        Broker broker = new(brokerAddress);
         broker.Connect().Wait();
         broker.Subscribe("topic/robot/notify", m =>
         {
@@ -27,7 +29,7 @@ internal class Program
         builder.Services.AddCors().AddHttpContextAccessor();
                 
         var app = builder.Build();
-        app.UseCors(p => p.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:5173", "http://localhost:3000"));
+        app.UseCors(p => p.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000"));
 
         // Subscribe for events
         app.MapGet("/sse", async (IHttpContextAccessor accessor, CancellationToken cancellationToken) =>
@@ -49,7 +51,6 @@ internal class Program
                     await res.WriteAsync($"data: {e}\n\n", cancellationToken); // Must be structured like: "data: <text>\n\n"
                     await res.Body.FlushAsync(cancellationToken);
                 }
-                break;
             }
             
         });

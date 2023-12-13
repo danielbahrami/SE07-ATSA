@@ -45,8 +45,8 @@ services:
     build:
       context: ./production_manager
     environment:
-      - SCHEDULING_SYSTEM=scheduling_system:22055
-      - NOTIFICATION_SYSTEM=555555
+      SCHEDULING_SYSTEM: scheduling_system:22055
+      NOTIFICATION_SYSTEM: notification_system:5000
     expose:
       - 3000
     ports:
@@ -54,11 +54,33 @@ services:
     networks:
       - atsa_system
 
+  notification_system:
+    build:
+      context: ./notification_system/NotificationSystem
+    ports:
+      - "5000:5000"
+    expose:
+      - 5000
+    depends_on:
+      - mqtt
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+
+  testing_system:
+    build:
+      context: ./testing_system/TestingSystem
+    depends_on:
+      - mqtt
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+
   robot_1:
     build:
       context: ./robot/Robot
-      args:
-        - ID="01"
     networks:
       - atsa_system
     depends_on:
@@ -66,6 +88,19 @@ services:
       - scheduling_system
     environment:
       - BROKER=mqtt
+      - ID=1
+
+  robot_2:
+    build:
+      context: ./robot/Robot
+    networks:
+      - atsa_system
+    depends_on:
+      - mqtt
+      - scheduling_system
+    environment:
+      - BROKER=mqtt
+      - ID=2
     
 networks:
   atsa_system:
