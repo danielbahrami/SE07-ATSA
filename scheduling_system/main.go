@@ -24,5 +24,4 @@ func main() {
 	b.Broker(broker.NewMQTT())
 	sys := b.Build()
 	sys.Start()
-
 }
