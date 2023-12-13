@@ -104,4 +104,4 @@ services:
     
 networks:
   atsa_system:
-    external: true
+    driver: bridge

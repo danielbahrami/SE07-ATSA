@@ -2,6 +2,12 @@
 
 Software Engineering, 7th semester - Advanced Topics in Software Architecture
 
+# Run the system
+
+Start the system
+
+`docker-compose up`
+
 ## MQTT
 
 Installing the necessary dependecies for development
