@@ -77,6 +77,7 @@ namespace Robot
                         case 4:
                             GPU.GPU gpu = builder.Build();
                             broker.Message("topic/production/gpu/completed", $"robot={id},{gpu.Package()}");
+                            broker.Message("topic/robot/status", "GPUProduced");
                             builder = new();
                             break;
                     }
@@ -95,6 +96,7 @@ namespace Robot
             this.state = State.RUNNING;
             Console.WriteLine("Running ...");
             broker.Message(notifyTopic, $"robot_id={this.id},state={this.state}");
+            broker.Message("topic/robot/status", $"{this.state}");
         }
 
         private void OnStop()
