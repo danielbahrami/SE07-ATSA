@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/danielbahrami/se07-atsa/influxdb/broker"
+	"github.com/danielbahrami/se07-atsa/influxdb/env"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/danielbahrami/se07-atsa/influxdb/env"
 )
 
 func logRobotStatus(running bool, gpuProduced bool) {

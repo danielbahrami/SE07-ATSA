@@ -24,8 +24,6 @@ func GetLogger() *AuditLogger {
 	return logger
 }
 
-// AuditLogger
-// Wrapper for messaging MQTT with topic "topic/audit_log"
 type AuditLogger struct {
 	broker broker.IBroker
 }
