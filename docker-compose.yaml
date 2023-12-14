@@ -1,0 +1,116 @@
+version: "3.8"
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:1.6.12
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - atsa_system
+
+  scheudling_system_db:
+    image: postgres:9.4
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: schedules
+    expose:
+      - 5432
+    networks:
+      - atsa_system
+    restart: on-failure
+
+  influxdb:
+    image: influxdb:2.7
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=my-user
+      - DOCKER_INFLUXDB_INIT_PASSWORD=my-password
+      - DOCKER_INFLUXDB_INIT_ORG=my-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=XunHv08Vh9iJ_sKZjbON--RigvArg5xEhci70fLa-0aAunazPJlPZxrNdeADP8010CqgL1T5jnd_g48o_pwGvQ==
+    networks:
+      - atsa_system
+    ports:
+      - "8086:8086"
+    expose:
+      - 8086
+
+  influx_connect:
+    build:
+      context: ./influxdb
+    networks:
+      - atsa_system
+    depends_on:
+      - mqtt
+      - influxdb
+    environment:
+      - BROKER=mqtt:1883
+      - INFLUXDB=influxdb:8086
+      - INFLUXDB_TOKEN=XunHv08Vh9iJ_sKZjbON--RigvArg5xEhci70fLa-0aAunazPJlPZxrNdeADP8010CqgL1T5jnd_g48o_pwGvQ==
+    restart: on-failure
+
+  scheduling_system:
+    build:
+      context: ./scheduling_system
+    networks:
+      - atsa_system
+    environment:
+      - API_PORT=22055
+      - BROKER=mqtt:1883
+      - PG_USER=admin
+      - PG_PASSWORD=admin
+      - PG_HOST=scheudling_system_db
+      - PG_PORT=5432
+      - PG_DATABASE=schedules
+    depends_on:
+      - mqtt
+      - scheudling_system_db
+    expose:
+      - 22055
+    ports:
+      - "22055:22055"
+    restart: on-failure
+
+  production_manager:
+    build:
+      context: ./production_manager
+    environment:
+      SCHEDULING_SYSTEM: scheduling_system:22055
+      NOTIFICATION_SYSTEM: notification_system:55022
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - atsa_system
+
+  notification_system:
+    build:
+      context: ./notification_system/NotificationSystem
+    ports:
+      - "55022:55022"
+    expose:
+      - 55022
+    depends_on:
+      - mqtt
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+
+  testing_system:
+    build:
+      context: ./testing_system/TestingSystem
+    depends_on:
+      - mqtt
+    networks:
+      - atsa_system
+    environment:
+      - BROKER=mqtt
+
+networks:
+  atsa_system:
+    driver: bridge

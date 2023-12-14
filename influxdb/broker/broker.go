@@ -27,7 +27,7 @@ func (b *Broker) Connect() bool {
 	brokerAddr := env.Get("BROKER")
 	options := mqtt.NewClientOptions()
 	options.AddBroker(fmt.Sprintf("tcp://%s", brokerAddr))
-	options.SetClientID("atse_scheduling_system")
+	options.SetClientID("atse_influxdb")
 	options.OnConnect = onConnect
 	options.OnConnectionLost = onConnectionLost
 

@@ -1,6 +1,7 @@
 package env
 
 import (
+	"log"
 	"os"
 	"strings"
 )
@@ -12,7 +13,8 @@ var env = map[string]string{}
 func Load(filename string) {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		log.Printf("Could not find %s\n", filename)
+		return
 	}
 	lines := strings.Split(string(bytes), "\n")
 	for i := range lines {
@@ -36,5 +38,9 @@ func clean(value string) string {
 }
 
 func Get(key string) string {
-	return env[key]
+	value, hasValue := env[key]
+	if hasValue {
+		return value
+	}
+	return os.Getenv(key)
 }
