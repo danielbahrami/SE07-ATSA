@@ -16,6 +16,8 @@ Start the "robots"
 docker-compose -f docker-compose-robots.yaml up -d
 ```
 
+The frontend will be available [here](http://localhost:3000)
+
 ## MQTT
 
 Installing the necessary dependecies for development
