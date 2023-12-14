@@ -14,7 +14,6 @@ internal class Program
 
         broker.Subscribe("topic/production/gpu/completed", m =>
         {
-            //True/False for test results
             broker.Message("topic/testing/gpu/completed", tester.TestProduct(m).ToString());
         });
 

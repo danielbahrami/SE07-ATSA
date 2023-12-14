@@ -117,8 +117,7 @@ namespace Robot
             broker.Message(notifyTopic, $"robot_id={this.id},state={this.state},error={error}");
         }
     }
-
-
+    
     internal enum State
     {
         IDLE,

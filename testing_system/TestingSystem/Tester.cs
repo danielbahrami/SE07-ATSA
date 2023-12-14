@@ -8,16 +8,13 @@ namespace TestingSystem
 {
     internal class Tester
     {
-
         public Tester()
         {
 
         }
 
         private static readonly string firmwareVersion = "0.0.1";
-
-        // Some product test :-|
-        // ProductString should look like this `robot={id},pcb={pcb},processor={processor},fan={fan},firmware={firmware},integrity={integrity}`
+        
         public string TestProduct(string productString)
         {
             Console.Write("Testing {0} ... ", productString);
@@ -48,7 +45,7 @@ namespace TestingSystem
                     string[] lineSplit = line.Split("=");
                     int integrity = Int32.Parse(lineSplit[1]);
                     Console.Write("{0} ... ", (integrity > 15 && integrity < 85));
-                    report += "integrity:" + (integrity > 15 && integrity < 85).ToString(); // idk some shit ...
+                    report += "integrity:" + (integrity > 15 && integrity < 85).ToString();
                     pass &= (integrity > 15 && integrity < 85);
                 }
             }
@@ -57,6 +54,4 @@ namespace TestingSystem
             return report;
         }
     }
-
-
 }

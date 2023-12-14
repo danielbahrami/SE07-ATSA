@@ -3,12 +3,8 @@ using System.IO;
 using NotificationSystem;
 using static System.Net.Mime.MediaTypeNames;
 
-//TODO: subscribe to MQTT on "topic/
-
 internal class Program
 {
-    // Very simple SSE server
-
     // Event Queue
     private static Queue<string> queue = new Queue<string>();
 
@@ -23,7 +19,6 @@ internal class Program
             Console.WriteLine("Notifying ... {0}", m);
             queue.Enqueue(m);
         });
-
 
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddCors().AddHttpContextAccessor();
@@ -68,7 +63,6 @@ internal class Program
         
         app.Run();
     }
-
 
     // Async queue
     public static async IAsyncEnumerable<string> EventQueue()
