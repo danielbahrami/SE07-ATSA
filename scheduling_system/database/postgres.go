@@ -31,15 +31,7 @@ func NewPG(user string, pass string, host string, port any, dbname string) Postg
 
 func (p *Postgres) Connect() {
 	log.Println("Connecting to postgres ...")
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		p.Host, p.Port, p.User, p.Pass, p.DBName)
-	/*
-		db, err := sql.Open("postgres", psqlInfo)
-		if err != nil {
-			panic(err)
-		}
-		p.db = db*/
-
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", p.Host, p.Port, p.User, p.Pass, p.DBName)
 	db, err := gorm.Open(postgres.Open(psqlInfo), &gorm.Config{})
 	if err != nil {
 		panic(err)
